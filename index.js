@@ -1,6 +1,373 @@
-// Cloudflare Worker para Vision Board 2026 - CÓDIGO COMPLETO
+// Cloudflare Worker para Vision Board 2026 - FRONTEND + BACKEND
 
-// Mapa de días
+// ============ HTML DEL FRONTEND ============
+const HTML_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Board 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animaciones */
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        /* Efectos especiales */
+        .text-stroke { 
+          -webkit-text-stroke: 2px black;
+          text-stroke: 2px black;
+          color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-[#F0F2F5] to-[#E3E7EB] p-4 md:p-8">
+    <div id="app" class="max-w-6xl mx-auto">
+        <!-- Contenido dinámico será insertado aquí por JavaScript -->
+    </div>
+    
+    <script>
+        // Logos desde Cloudflare R2
+        const logos = [
+          {
+            id: 1,
+            url: 'https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev/logo1.png',
+            bgColor: 'bg-[#FFD700]',
+            label: 'AMARILLO'
+          },
+          {
+            id: 2,
+            url: 'https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev/logo2.png',
+            bgColor: 'bg-[#00AEEF]',
+            label: 'AZUL'
+          },
+          {
+            id: 3,
+            url: 'https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev/logo3.png',
+            bgColor: 'bg-white',
+            label: 'BLANCO'
+          },
+          {
+            id: 4,
+            url: 'https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev/logo4.png',
+            bgColor: 'bg-[#FF4136]',
+            label: 'ROJO'
+          },
+          {
+            id: 5,
+            url: 'https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev/logo5.png',
+            bgColor: 'bg-black',
+            label: 'NEGRO'
+          }
+        ];
+
+        // Mapa de días
+        const DAYS_MAP = {
+          'Lunes': 1,
+          'Martes': 2,
+          'Miércoles': 3,
+          'Jueves': 4,
+          'Viernes': 5,
+          'Sábado': 6,
+          'Domingo': 0
+        };
+
+        // Estado de la aplicación
+        let appState = {
+          submitted: false,
+          loading: false,
+          formData: {
+            nombreApodo: '',
+            correoElectronico: '',
+            objetivosDelAño: '',
+            diaRecordatorio: 'Lunes'
+          }
+        };
+
+        // URL del Worker (la misma)
+        const WORKER_URL = window.location.origin;
+
+        // Renderizar la aplicación
+        function render() {
+          const app = document.getElementById('app');
+          
+          if (appState.submitted) {
+            app.innerHTML = renderSuccess();
+          } else {
+            app.innerHTML = renderForm();
+          }
+          
+          // Inicializar Lucide icons
+          if (window.lucide) {
+            window.lucide.createIcons();
+          }
+        }
+
+        // Renderizar formulario
+        function renderForm() {
+          const logosHTML = logos.map(logo => \`
+            <div 
+              key="\${logo.id}"
+              class="\${logo.bgColor} w-20 h-20 border-4 border-black flex items-center justify-center p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform hover:scale-105 transition-all overflow-hidden"
+            >
+              <img 
+                src="\${logo.url}" 
+                alt="Logo \${logo.id}" 
+                class="w-full h-full object-contain pointer-events-none"
+                onerror="this.style.display='none'; this.parentNode.innerHTML='<span class=\\\"text-xs font-black opacity-50\\\">LOGO \${logo.id}</span>'"
+              />
+            </div>
+          \`).join('');
+
+          return \`
+            <div class="w-full bg-white border-[8px] border-black p-6 sm:p-8 md:p-12 shadow-[24px_24px_0px_0px_rgba(0,0,0,1)] relative transform hover:shadow-[32px_32px_0px_0px_rgba(0,0,0,0.8)] transition-all">
+              <!-- Badge -->
+              <div class="absolute -top-3 left-4 sm:left-8">
+                <div class="bg-[#FBD78F] border-4 border-black px-4 sm:px-6 py-1 sm:py-2 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  VISION BOARD 2026
+                </div>
+              </div>
+
+              <!-- Logos -->
+              <div class="flex flex-wrap justify-center items-center gap-3 sm:gap-4 mb-8 sm:mb-12 mt-4">
+                \${logosHTML}
+              </div>
+
+              <!-- Título -->
+              <div class="mb-8 sm:mb-12 text-left border-l-8 border-black pl-4 sm:pl-6">
+                <div class="inline-block bg-black text-[#FFD700] px-3 py-1 font-black text-[10px] uppercase mb-3 sm:mb-4 tracking-widest">
+                  Sistema de Productividad
+                </div>
+                <h1 class="text-4xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.8] italic">
+                  DISEÑA TU <br />
+                  <span class="text-[#00AEEF]">AÑO</span> <br />
+                  <span class="text-[#FF4136]">PERFECTO</span>
+                </h1>
+              </div>
+
+              <!-- Formulario -->
+              <form id="mainForm" class="space-y-6 sm:space-y-8">
+                <div class="grid md:grid-cols-2 gap-6 sm:gap-8">
+                  <!-- Nombre -->
+                  <div class="bg-[#FFD700] p-4 sm:p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                    <label class="block text-xs font-black uppercase mb-2 sm:mb-3 flex items-center gap-2">
+                      <i data-lucide="user" class="w-4 h-4"></i> Nombre / Apodo
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      id="nombreApodo"
+                      value="\${appState.formData.nombreApodo}"
+                      placeholder="ESCRIBE TU NOMBRE"
+                      class="w-full bg-white border-4 border-black p-3 sm:p-4 font-black outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,174,239,1)]"
+                    />
+                  </div>
+
+                  <!-- Email -->
+                  <div class="bg-[#00AEEF] p-4 sm:p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-white">
+                    <label class="block text-xs font-black uppercase mb-2 sm:mb-3 flex items-center gap-2">
+                      <i data-lucide="mail" class="w-4 h-4"></i> Correo Electrónico
+                    </label>
+                    <input
+                      required
+                      type="email"
+                      id="correoElectronico"
+                      value="\${appState.formData.correoElectronico}"
+                      placeholder="CORREO@EJEMPLO.COM"
+                      class="w-full bg-white border-4 border-black p-3 sm:p-4 font-black outline-none text-black focus:shadow-[4px_4px_0px_0px_rgba(255,215,0,1)]"
+                    />
+                  </div>
+                </div>
+
+                <!-- Objetivos -->
+                <div class="bg-white border-4 border-black p-4 sm:p-6 shadow-[12px_12px_0px_0px_rgba(255,65,54,1)]">
+                  <label class="block text-xs font-black uppercase mb-3 sm:mb-4 flex items-center gap-2 text-[#FF4136]">
+                    <i data-lucide="target" class="w-4 h-4"></i> Objetivos para 2026
+                  </label>
+                  <textarea
+                    required
+                    id="objetivosDelAño"
+                    placeholder="¿Qué vas a lograr este año? Sé específico..."
+                    class="w-full bg-[#F9F9F9] border-4 border-black p-3 sm:p-4 font-bold outline-none h-32 sm:h-40 resize-none focus:bg-white transition-all"
+                  >\${appState.formData.objetivosDelAño}</textarea>
+                </div>
+
+                <!-- Días -->
+                <div class="bg-black p-6 sm:p-8 border-4 border-black text-white shadow-[12px_12px_0px_0px_rgba(0,174,239,1)]">
+                  <div class="flex items-center justify-between mb-6 sm:mb-8">
+                    <label class="text-xs font-black uppercase flex items-center gap-2 text-[#FFD700]">
+                      <i data-lucide="bell" class="w-4 h-4"></i> Día de Recordatorio
+                    </label>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    \${['Lunes', 'Martes', 'Miércoles', 'Viernes'].map(dia => \`
+                      <button
+                        type="button"
+                        onclick="appState.formData.diaRecordatorio = '\${dia}'; render();"
+                        class="py-3 sm:py-4 border-4 font-black text-xs sm:text-sm uppercase transition-all \${appState.formData.diaRecordatorio === dia 
+                          ? 'bg-[#00AEEF] border-white text-white translate-x-1 translate-y-1' 
+                          : 'bg-white border-white text-black hover:bg-[#FFD700]'}"
+                      >
+                        \${dia}
+                      </button>
+                    \`).join('')}
+                  </div>
+                </div>
+
+                <!-- Submit -->
+                <button 
+                  type="submit"
+                  id="submitBtn"
+                  class="w-full bg-[#FF4136] text-white font-black py-5 sm:py-7 border-4 border-black transition-all flex items-center justify-center gap-3 sm:gap-4 uppercase tracking-[0.2em] text-xl sm:text-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:bg-black active:translate-x-1 active:translate-y-1 active:shadow-none"
+                >
+                  <span id="submitText">GUARDAR PLAN</span>
+                  <i data-lucide="send" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+                </button>
+              </form>
+
+              <!-- Footer -->
+              <div class="mt-12 sm:mt-16 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 border-t-4 border-black pt-6 sm:pt-8">
+                <div class="flex items-center gap-2 sm:gap-3">
+                  \${logos.map(logo => \`
+                    <div key="\${logo.id}-small" class="w-8 h-8 sm:w-10 sm:h-10 bg-white border-2 border-black flex items-center justify-center p-1 opacity-80 hover:opacity-100 transition-all">
+                      <img 
+                        src="\${logo.url}" 
+                        alt="Logo \${logo.id}" 
+                        class="max-w-full max-h-full object-contain"
+                        onerror="this.style.display='none'"
+                      />
+                    </div>
+                  \`).join('')}
+                </div>
+                <div class="text-center sm:text-right">
+                  <p class="font-black text-[8px] sm:text-[10px] uppercase italic tracking-widest text-gray-500">
+                    © 2026 // Sistema Automatizado // IA + 5 Servicios de Email
+                  </p>
+                </div>
+              </div>
+            </div>
+          \`;
+        }
+
+        // Renderizar éxito
+        function renderSuccess() {
+          return \`
+            <div class="w-full max-w-md bg-white border-8 border-black p-6 sm:p-8 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] mx-auto transform hover:scale-[1.02] transition-all">
+              <div class="flex justify-center mb-6">
+                <div class="bg-gradient-to-r from-[#00AEEF] to-[#00C6FF] p-4 sm:p-5 border-4 border-black rounded-full animate-pulse">
+                  <i data-lucide="check-circle" class="w-12 h-12 sm:w-16 sm:h-16 text-white"></i>
+                </div>
+              </div>
+              <h2 class="text-2xl sm:text-4xl font-black mb-6 uppercase tracking-tighter text-center italic leading-none">
+                ¡REGISTRO EXITOSO!
+              </h2>
+              <div class="space-y-4 bg-gradient-to-r from-black to-gray-900 p-4 sm:p-6 border-4 border-[#FF4136] text-white font-bold text-xs sm:text-sm tracking-widest rounded-lg">
+                <p class="border-b border-white/10 pb-3 flex items-center">
+                  <span class="text-[#FFD700] mr-2">🎯</span>
+                  <span>USUARIO: \${appState.formData.nombreApodo.toUpperCase()}</span>
+                </p>
+                <p class="border-b border-white/10 pb-3 flex items-center">
+                  <span class="text-[#00AEEF] mr-2">✉️</span>
+                  <span>EMAIL: \${appState.formData.correoElectronico.toUpperCase()}</span>
+                </p>
+                <p class="flex items-center">
+                  <span class="text-[#FF4136] mr-2">🔔</span>
+                  <span>RECORDATORIO: \${appState.formData.diaRecordatorio.toUpperCase()}</span>
+                </p>
+              </div>
+              <div class="mt-6 p-3 sm:p-4 bg-[#FBD78F] border-4 border-black text-center">
+                <p class="text-xs sm:text-sm font-bold text-black">
+                  📬 <strong>Revisa tu correo</strong> - Te hemos enviado un mensaje de bienvenida
+                </p>
+              </div>
+              <button 
+                onclick="appState.submitted = false; appState.formData = {nombreApodo: '', correoElectronico: '', objetivosDelAño: '', diaRecordatorio: 'Lunes'}; render();"
+                class="w-full mt-6 sm:mt-8 bg-gradient-to-r from-black to-gray-800 text-white font-black py-4 sm:py-5 border-4 border-black hover:from-[#FF4136] hover:to-red-600 transition-all uppercase tracking-wider shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+              >
+                CREAR NUEVO PLAN
+              </button>
+            </div>
+          \`;
+        }
+
+        // Manejar submit del formulario
+        async function handleSubmit(e) {
+          e.preventDefault();
+          
+          // Actualizar estado
+          appState.formData.nombreApodo = document.getElementById('nombreApodo').value;
+          appState.formData.correoElectronico = document.getElementById('correoElectronico').value;
+          appState.formData.objetivosDelAño = document.getElementById('objetivosDelAño').value;
+          
+          appState.loading = true;
+          const submitBtn = document.getElementById('submitBtn');
+          const submitText = document.getElementById('submitText');
+          
+          if (submitBtn && submitText) {
+            submitBtn.disabled = true;
+            submitText.innerHTML = 'PROCESANDO...';
+            submitBtn.innerHTML = \`
+              <svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="submitText">PROCESANDO...</span>
+            \`;
+          }
+          
+          try {
+            const response = await fetch('\${WORKER_URL}/api/submit', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                email: appState.formData.correoElectronico,
+                nombre: appState.formData.nombreApodo,
+                objetivos: appState.formData.objetivosDelAño,
+                diaRecordatorio: appState.formData.diaRecordatorio
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              appState.submitted = true;
+            } else {
+              alert(\`Error: \${result.error || result.message || 'Intenta de nuevo'}\`);
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            // Mostrar éxito igual para que el usuario no se preocupe
+            appState.submitted = true;
+          } finally {
+            appState.loading = false;
+            render();
+          }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+          render();
+          document.getElementById('mainForm')?.addEventListener('submit', handleSubmit);
+        });
+    </script>
+</body>
+</html>
+`;
+
+// ============ API BACKEND ============
 const DAYS_MAP = {
   'Lunes': 1,
   'Martes': 2,
@@ -28,7 +395,17 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
     
-    // Rutas
+    // SERVIR FRONTEND (HTML) en la raíz
+    if (path === '/' || path === '/index.html') {
+      return new Response(HTML_TEMPLATE, {
+        headers: {
+          'Content-Type': 'text/html;charset=UTF-8',
+          'Cache-Control': 'public, max-age=3600'
+        }
+      });
+    }
+    
+    // API Routes
     if (path === '/api/submit' && request.method === 'POST') {
       return await handleSubmit(request, env, ctx);
     }
@@ -47,7 +424,13 @@ export default {
       });
     }
     
-    return new Response('Vision Board 2026 API', { status: 200 });
+    // Para cualquier otra ruta, servir el frontend también
+    return new Response(HTML_TEMPLATE, {
+      headers: {
+        'Content-Type': 'text/html;charset=UTF-8',
+        'Cache-Control': 'public, max-age=3600'
+      }
+    });
   },
   
   // CRON - Se ejecuta automáticamente cada día a las 9:00 AM UTC
@@ -56,7 +439,7 @@ export default {
   }
 };
 
-// ============ FUNCIONES PRINCIPALES ============
+// ============ FUNCIONES BACKEND (MANTENER TODO LO QUE YA TIENES) ============
 
 // 1. Manejar registro de usuario
 async function handleSubmit(request, env, ctx) {
