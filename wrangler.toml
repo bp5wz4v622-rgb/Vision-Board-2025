@@ -1,6 +1,7 @@
 name = "vision-board-worker"
 compatibility_date = "2024-01-01"
 workers_dev = true
+main = "index.js"  # ¡ESTO ES LO QUE FALTA!
 
 [vars]
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOojihRugk1rsO7CMNQCu-CUOLDF5RWbJvNOPwAc_BHOt2M3GvonuQDN8F9lFQmc_j/exec"
