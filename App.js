@@ -23,7 +23,7 @@ const App = () => {
     
     try {
       // URL de tu Cloudflare Worker - CAMBIAR ESTO DESPUÉS DE DESPLEGAR
-      const WORKER_URL = 'https://vision-board-worker.YOUR_SUBDOMAIN.workers.dev';
+      const WORKER_URL = 'https://vision-board-worker.torevueltopj.workers.dev/';
       
       const response = await fetch(`${WORKER_URL}/api/submit`, {
         method: 'POST',
