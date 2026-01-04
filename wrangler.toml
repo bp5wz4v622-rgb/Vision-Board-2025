@@ -1,0 +1,16 @@
+name = "vision-board-worker"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+[vars]
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOojihRugk1rsO7CMNQCu-CUOLDF5RWbJvNOPwAc_BHOt2M3GvonuQDN8F9lFQmc_j/exec"
+LOGOS_R2_URL = "https://pub-427abfa5785a4d66ba550c33b5c48cd2.r2.dev"
+SENDGRID_API_KEY = "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"
+MAILJET_API_KEY = "1500d78117befce6080c3c070567391a"
+MAILJET_SECRET_KEY = "5c8852d0b6d9fe2f8e24f40b19c8cdc8"
+RESEND_API_KEY = "re_RaMW9GjZ_4hYekCqUDu7Dqkh5tG977EkY"
+DEEPSEEK_API_KEY = "sk-9692e6da56d14c87870ba5546d17b11a"
+GEMINI_API_KEY = "AIzaSyAn4O7Om4RyPYoY9av6UCfqqk9cnw_tJb0"
+
+[triggers]
+crons = ["0 9 * * *"]
